@@ -1,32 +1,38 @@
+import React from 'react'
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
+import LogWorkout from './pages/Logworkout'
+import './index.css'
+
 function App() {
   return (
-    
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      
-     
-      <div className="max-w-2xl w-full bg-white p-8 rounded-lg shadow-lg text-center">
+    <Router>
+      <div className="min-h-screen bg-gray-100">
+        <div className="text-center py-8">
+          <h1 className="text-4xl font-bold mb-4 text-blue-800">
+            Fitness Tracker
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Welcome to your fitness tracking app!
+          </p>
+        </div>
         
-  
-        <h1 className="text-4xl font-extrabold text-indigo-600 mb-4">
-          Fitness Tracker
-        </h1>
-        
-        
-        <p className="text-lg text-gray-700 mb-6">
-          Project Setup Complete!
-        </p>
-        
-      
-        <p className="text-md text-gray-500">
-          React, Vite, and Tailwind CSS are all configured correctly. Ready to start building components and fetching API data.
-        </p>
-        
-       
-
+        <Routes>
+          <Route path="/" element={
+            <div className="text-center">
+              <h2 className="text-2xl font-semibold mb-4">Get Started</h2>
+              <a 
+                href="/log" 
+                className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Log Your Workout
+              </a>
+            </div>
+          } />
+          <Route path="/log" element={<LogWorkout />} />
+        </Routes>
       </div>
-    </div>
-  );
+    </Router>
+  )
 }
 
-
-export default App;
+export default App
