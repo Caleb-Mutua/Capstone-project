@@ -1,207 +1,106 @@
 import { useState, useEffect } from 'react';
-import { fetchExercises, fetchMuscleGroups } from '../api/wger';
 
-export default function ExerciseList({ onExerciseSelect, selectedExercises = [] }) {
-  const [exercises, setExercises] = useState([]);
-  const [muscleGroups, setMuscleGroups] = useState([]);
+// This function will live in a separate file in a real app, e.g., src/api/wger.js
+async function fetchExercises() {
+  const API_URL = 'https://wger.de/api/v2/exerciseinfo/?language=2&limit=300';
+  const API_KEY = import.meta.env.VITE_WGER_API_KEY; // Make sure your .env file is set up!
+
+  try {
+    const response = await fetch(API_URL, {
+      headers: { 'Authorization': `Token ${API_KEY}` }
+    });
+    if (!response.ok) {
+      throw new Error('Network response was not ok. Check your API Key.');
+    }
+    const data = await response.json();
+    // Filter out exercises without a name, which can sometimes happen
+    return data.results.filter(ex => ex.name && ex.name.trim() !== '');
+  } catch (error) {
+    console.error("Failed to fetch exercises:", error);
+    // Re-throw the error so the component can catch it
+    throw error;
+  }
+}
+
+export default function ExerciseList({ onExerciseSelect, selectedExercises }) {
+  // 1. State Management
+  const [allExercises, setAllExercises] = useState([]); // Master list from API
+  const [filteredExercises, setFilteredExercises] = useState([]); // List to display
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMuscleGroup, setSelectedMuscleGroup] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // 2. Fetch data ONCE when the component mounts
   useEffect(() => {
-    async function loadData() {
+    async function loadExercises() {
       try {
         setLoading(true);
         setError(null);
-        
-        const [exercisesData, muscleGroupsData] = await Promise.all([
-          fetchExercises(),
-          fetchMuscleGroups()
-        ]);
-        
-        setExercises(exercisesData);
-        setMuscleGroups(muscleGroupsData);
+        const data = await fetchExercises();
+        setAllExercises(data);
+        setFilteredExercises(data); // Initially, show all exercises
       } catch (err) {
         setError(err.message);
       } finally {
         setLoading(false);
       }
     }
-    
-    loadData();
-  }, []);
+    loadExercises();
+  }, []); // Empty array means this effect runs only once
 
+  // 3. Filter exercises when search term changes
   useEffect(() => {
-    async function searchExercises() {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await fetchExercises(searchTerm, selectedMuscleGroup);
-        setExercises(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+    if (!searchTerm) {
+      setFilteredExercises(allExercises);
+      return;
     }
-
-    // Debounce search
-    const timeoutId = setTimeout(searchExercises, 300);
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm, selectedMuscleGroup]);
-
-  const isExerciseSelected = (exerciseId) => {
-    return selectedExercises.some(ex => ex.id === exerciseId);
-  };
-
-  const handleExerciseClick = (exercise) => {
-    if (onExerciseSelect) {
-      onExerciseSelect(exercise);
-    }
-  };
-
-  if (loading && exercises.length === 0) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <div className="spinner w-12 h-12"></div>
-      </div>
+    const lowercasedTerm = searchTerm.toLowerCase();
+    const filtered = allExercises.filter(ex =>
+      ex.name.toLowerCase().includes(lowercasedTerm) ||
+      ex.category.name.toLowerCase().includes(lowercasedTerm)
     );
-  }
+    setFilteredExercises(filtered);
+  }, [searchTerm, allExercises]); // This effect runs whenever searchTerm or allExercises change
 
-  if (error) {
-    return (
-      <div className="bg-red-900/20 border border-red-500/50 rounded-xl p-6 text-red-400">
-        <p className="font-medium text-lg">Error loading exercises:</p>
-        <p>{error}</p>
-      </div>
-    );
-  }
+  // Get a list of IDs of exercises already in the workout
+  const selectedIds = new Set(selectedExercises.map(ex => ex.id));
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Search and Filter Controls */}
-      <div className="space-y-4">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search exercises by name or category..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="input text-lg pr-12"
-          />
-          <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-text-muted">
-            🔍
-          </div>
-        </div>
-        
-        <select
-          value={selectedMuscleGroup}
-          onChange={(e) => setSelectedMuscleGroup(e.target.value)}
-          className="input"
-        >
-          <option value="">All Muscle Groups</option>
-          {muscleGroups.map(muscle => (
-            <option key={muscle.id} value={muscle.id}>
-              {muscle.name}
-            </option>
-          ))}
-        </select>
-      </div>
+    <div className="space-y-4">
+      <input
+        type="text"
+        placeholder="Search exercises by name or category..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="w-full p-3 bg-background-dark border border-border rounded-lg text-text-primary placeholder:text-text-secondary focus:ring-2 focus:ring-primary focus:outline-none"
+      />
 
-      {/* Loading indicator for search */}
-      {loading && (
-        <div className="flex justify-center py-6">
-          <div className="spinner w-8 h-8"></div>
-        </div>
-      )}
+      {loading && <p className="text-text-secondary">Loading exercises...</p>}
+      
+      {error && <p className="text-red-400">Error: {error}</p>}
 
-      {/* Exercise Grid */}
-      {!loading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {exercises.length > 0 ? (
-            exercises.map((exercise, index) => (
-              <div
-                key={exercise.id}
-                onClick={() => handleExerciseClick(exercise)}
-                className={`card p-6 cursor-pointer hover-lift group animate-fade-in ${
-                  isExerciseSelected(exercise.id) 
-                    ? 'ring-2 ring-primary shadow-glow' 
-                    : 'hover:ring-2 hover:ring-primary/30'
-                }`}
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <h3 className="font-bold text-xl text-primary group-hover:text-primary-light transition-colors">
-                    {exercise.name}
-                  </h3>
-                  {isExerciseSelected(exercise.id) && (
-                    <span className="badge-success">✓ Selected</span>
-                  )}
+      {!loading && !error && (
+        <div className="max-h-64 overflow-y-auto space-y-2 pr-2">
+          {filteredExercises.length > 0 ? (
+            filteredExercises.map(exercise => (
+              <div key={exercise.id} className="flex items-center justify-between p-3 bg-background-dark rounded-lg">
+                <div>
+                  <h4 className="font-medium">{exercise.name}</h4>
+                  <p className="text-sm text-text-secondary">{exercise.category.name}</p>
                 </div>
-                
-                {exercise.category && (
-                  <div className="badge-primary mb-3">{exercise.category.name}</div>
-                )}
-                
-                {exercise.muscles && exercise.muscles.length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-xs text-text-muted mb-2 uppercase tracking-wide font-medium">Targeted Muscles</p>
-                    <div className="flex flex-wrap gap-2">
-                      {exercise.muscles.slice(0, 3).map(muscle => (
-                        <span
-                          key={muscle.id}
-                          className="badge-accent"
-                        >
-                          {muscle.name}
-                        </span>
-                      ))}
-                      {exercise.muscles.length > 3 && (
-                        <span className="badge-secondary">
-                          +{exercise.muscles.length - 3}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-                
-                {exercise.description && (
-                  <div 
-                    className="text-sm text-text-secondary line-clamp-3 leading-relaxed"
-                    dangerouslySetInnerHTML={{ 
-                      __html: exercise.description.length > 150 
-                        ? exercise.description.substring(0, 150) + '...' 
-                        : exercise.description 
-                    }} 
-                  />
-                )}
-
-                {/* Hover effect indicator */}
-                <div className="mt-4 pt-4 border-t border-border/20">
-                  <div className="flex items-center justify-between text-sm text-text-muted group-hover:text-text-secondary transition-colors">
-                    <span>Click to add</span>
-                    <span className="opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-                  </div>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => onExerciseSelect(exercise)}
+                  disabled={selectedIds.has(exercise.id)}
+                  className="px-4 py-2 bg-primary text-text-primary rounded-lg text-sm font-medium transition-colors hover:bg-primary/90 disabled:bg-gray-500 disabled:cursor-not-allowed"
+                >
+                  {selectedIds.has(exercise.id) ? 'Added' : 'Add'}
+                </button>
               </div>
             ))
           ) : (
-            <div className="col-span-full text-center py-16 text-text-secondary">
-              <div className="text-6xl mb-4">🔍</div>
-              <p className="text-lg font-medium">No exercises found</p>
-              <p className="text-sm mt-2">Try adjusting your search terms or muscle group filter.</p>
-            </div>
+            <p className="text-text-secondary">No exercises found.</p>
           )}
-        </div>
-      )}
-
-      {/* Results count */}
-      {!loading && exercises.length > 0 && (
-        <div className="text-center py-4">
-          <p className="text-text-secondary">
-            Showing {exercises.length} exercise{exercises.length !== 1 ? 's' : ''}
-            {selectedMuscleGroup && ' for selected muscle group'}
-          </p>
         </div>
       )}
     </div>
