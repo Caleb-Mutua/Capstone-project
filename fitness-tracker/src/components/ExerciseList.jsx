@@ -1,69 +1,94 @@
+// src/components/ExerciseList.jsx (Verified and Refined)
+
 import { useState, useEffect } from 'react';
 
-// This function will live in a separate file in a real app, e.g., src/api/wger.js
-async function fetchExercises() {
-  const API_URL = 'https://wger.de/api/v2/exerciseinfo/?language=2&limit=300';
-  const API_KEY = import.meta.env.VITE_WGER_API_KEY; // Make sure your .env file is set up!
+// REFINED: Your wger.js file should export these functions
+import { fetchAllExercises, fetchMuscleGroups } from '../api/wger'; // Adjust path if needed
 
-  try {
-    const response = await fetch(API_URL, {
-      headers: { 'Authorization': `Token ${API_KEY}` }
-    });
-    if (!response.ok) {
-      throw new Error('Network response was not ok. Check your API Key.');
-    }
-    const data = await response.json();
-    // Filter out exercises without a name, which can sometimes happen
-    return data.results.filter(ex => ex.name && ex.name.trim() !== '');
-  } catch (error) {
-    console.error("Failed to fetch exercises:", error);
-    // Re-throw the error so the component can catch it
-    throw error;
-  }
-}
+export default function ExerciseList({ onExerciseSelect, selectedExercises = [] }) {
+  // --- State Management ---
+  // REFINED: We now have a "master list" and a "filtered list"
+  const [allExercises, setAllExercises] = useState([]); // Master list from API, never changes.
+  const [filteredExercises, setFilteredExercises] = useState([]); // The list that gets displayed.
+  
+  const [muscleGroups, setMuscleGroups] = useState([]);
 
-export default function ExerciseList({ onExerciseSelect, selectedExercises }) {
-  // 1. State Management
-  const [allExercises, setAllExercises] = useState([]); // Master list from API
-  const [filteredExercises, setFilteredExercises] = useState([]); // List to display
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 2. Fetch data ONCE when the component mounts
+
+  // --- Effect 1: Fetch all data ONCE on component mount ---
   useEffect(() => {
-    async function loadExercises() {
+    async function loadInitialData() {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchExercises();
-        setAllExercises(data);
-        setFilteredExercises(data); // Initially, show all exercises
+        
+        // Fetch both lists in parallel for efficiency
+        const [exercisesData, muscleGroupsData] = await Promise.all([
+          fetchAllExercises(),
+          fetchMuscleGroups()
+        ]);
+
+        setAllExercises(exercisesData); // Set the master list
+        setFilteredExercises(exercisesData); // Initially, the filtered list is the same
+        setMuscleGroups(muscleGroupsData);
+
       } catch (err) {
-        setError(err.message);
+        setError(err.message || 'Failed to load data.');
       } finally {
         setLoading(false);
       }
     }
-    loadExercises();
-  }, []); // Empty array means this effect runs only once
 
-  // 3. Filter exercises when search term changes
+    
+    loadInitialData();
+  }, []); // Empty array ensures this runs only once.
+
+  // --- Effect 2: Perform CLIENT-SIDE filtering whenever filters change ---
+  // FIXED: This effect no longer makes API calls. It's now instant.
   useEffect(() => {
-    if (!searchTerm) {
-      setFilteredExercises(allExercises);
-      return;
-    }
-    const lowercasedTerm = searchTerm.toLowerCase();
-    const filtered = allExercises.filter(ex =>
-      ex.name.toLowerCase().includes(lowercasedTerm) ||
-      ex.category.name.toLowerCase().includes(lowercasedTerm)
-    );
-    setFilteredExercises(filtered);
-  }, [searchTerm, allExercises]); // This effect runs whenever searchTerm or allExercises change
+    let result = [...allExercises]; // Start with the full master list
 
-  // Get a list of IDs of exercises already in the workout
-  const selectedIds = new Set(selectedExercises.map(ex => ex.id));
+    // 1. Filter by selected muscle group first
+    if (selectedMuscleGroup) {
+      result = result.filter(exercise => 
+        // WGER `exerciseinfo` has a `muscles` array of objects with `id` and `name`
+        exercise.muscles.some(muscle => muscle.id === parseInt(selectedMuscleGroup))
+      );
+    }
+
+    // 2. Filter by search term on the remaining items
+    if (searchTerm) {
+      const lowercasedTerm = searchTerm.toLowerCase();
+      result = result.filter(exercise =>
+        exercise.name.toLowerCase().includes(lowercasedTerm) ||
+        exercise.category.name.toLowerCase().includes(lowercasedTerm)
+      );
+    }
+
+    setFilteredExercises(result);
+  }, [searchTerm, selectedMuscleGroup, allExercises]); // Re-run this logic if filters or the master list change.
+
+  // --- Helper Functions ---
+  const isExerciseSelected = (exerciseId) => {
+    return selectedExercises.some(ex => ex.id === exerciseId);
+  };
+
+  // --- Render Logic ---
+  if (loading) {
+    return <div className="text-center p-6 text-text-secondary">Loading exercises...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-900/20 border border-red-500/50 rounded-xl p-6 text-red-400">
+        <p className="font-medium text-lg">Error:</p>
+        <p>{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
