@@ -1,3 +1,4 @@
+
 // src/components/WorkoutLogForm.jsx (Verified and Corrected)
 
 import { useState, useEffect } from 'react';
@@ -25,6 +26,7 @@ const generateWeightOptions = (start, end, step) => {
 const SETS_OPTIONS = generateNumericOptions(1, 10);
 const REPS_OPTIONS = generateNumericOptions(1, 30);
 const WEIGHT_OPTIONS = generateWeightOptions(2.5, 200, 1.25);
+
 
 
 export default function WorkoutLogForm({ onSaveWorkout, onCancel }) {
@@ -84,21 +86,25 @@ export default function WorkoutLogForm({ onSaveWorkout, onCancel }) {
     setSetsData(newSetsData);
   };
 
+
   const handleAddExerciseToWorkout = () => {
     if (!selectedExerciseId) {
       alert('Please select an exercise.');
       return;
     }
     const selectedExerciseData = apiExercises.find(ex => ex.id === parseInt(selectedExerciseId));
+
     const newExercise = {
       id: selectedExerciseData.id,
       name: selectedExerciseData.name_translations?.en || selectedExerciseData.name || "Unnamed Exercise",
       category: selectedExerciseData.category, // still just ID
       sets: setsData,
     };
+
     
     
     setCurrentWorkout([...currentWorkout, newExercise]);
+
 
     // Reset the form for the next exercise
     setSelectedExerciseId('');
@@ -107,21 +113,26 @@ export default function WorkoutLogForm({ onSaveWorkout, onCancel }) {
     setSetsData(Array.from({ length: 3 }, () => ({ reps: '8', weight: '20' })));
   };
 
+
   const handleSubmit = () => {
     if (currentWorkout.length === 0) {
       alert('Please add at least one exercise to your workout.');
       return;
     }
     const finalWorkout = {
+
       id: Date.now(),
       name: workoutName || `Workout on ${new Date().toLocaleDateString()}`,
       date: new Date().toISOString(),
+
       exercises: currentWorkout,
     };
     onSaveWorkout(finalWorkout);
+
   };
   return (
     <div className="space-y-6">
+
       {/* Section 1: Main Form */}
       <div className="bg-background-medium p-6 rounded-lg shadow-lg">
         <h2 className="text-2xl font-bold mb-4">Log New Workout</h2>
@@ -207,9 +218,11 @@ export default function WorkoutLogForm({ onSaveWorkout, onCancel }) {
             >
               Add Exercise to Workout
             </button>
+
           </div>
         </div>
       </div>
+
 
       {/* --- Section 2: Current Workout Summary --- */}
       {currentWorkout.length > 0 && (
@@ -239,6 +252,7 @@ export default function WorkoutLogForm({ onSaveWorkout, onCancel }) {
         >
           Save Full Workout
         </button>
+
       </div>
     </div>
   );
