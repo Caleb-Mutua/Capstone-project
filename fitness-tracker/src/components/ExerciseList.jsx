@@ -1,83 +1,90 @@
+// src/components/ExerciseList.jsx (Verified and Refined)
+
 import { useState, useEffect } from 'react';
-import { fetchExercises, fetchMuscleGroups } from '../api/wger';
+// REFINED: Your wger.js file should export these functions
+import { fetchAllExercises, fetchMuscleGroups } from '../api/wger'; // Adjust path if needed
 
 export default function ExerciseList({ onExerciseSelect, selectedExercises = [] }) {
-  const [exercises, setExercises] = useState([]);
+  // --- State Management ---
+  // REFINED: We now have a "master list" and a "filtered list"
+  const [allExercises, setAllExercises] = useState([]); // Master list from API, never changes.
+  const [filteredExercises, setFilteredExercises] = useState([]); // The list that gets displayed.
+  
   const [muscleGroups, setMuscleGroups] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // --- Effect 1: Fetch all data ONCE on component mount ---
   useEffect(() => {
-    async function loadData() {
+    async function loadInitialData() {
       try {
         setLoading(true);
         setError(null);
         
+        // Fetch both lists in parallel for efficiency
         const [exercisesData, muscleGroupsData] = await Promise.all([
-          fetchExercises(),
+          fetchAllExercises(),
           fetchMuscleGroups()
         ]);
-        
-        setExercises(exercisesData);
+
+        setAllExercises(exercisesData); // Set the master list
+        setFilteredExercises(exercisesData); // Initially, the filtered list is the same
         setMuscleGroups(muscleGroupsData);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || 'Failed to load data.');
       } finally {
         setLoading(false);
       }
     }
     
-    loadData();
-  }, []);
+    loadInitialData();
+  }, []); // Empty array ensures this runs only once.
 
+  // --- Effect 2: Perform CLIENT-SIDE filtering whenever filters change ---
+  // FIXED: This effect no longer makes API calls. It's now instant.
   useEffect(() => {
-    async function searchExercises() {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await fetchExercises(searchTerm, selectedMuscleGroup);
-        setExercises(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+    let result = [...allExercises]; // Start with the full master list
+
+    // 1. Filter by selected muscle group first
+    if (selectedMuscleGroup) {
+      result = result.filter(exercise => 
+        // WGER `exerciseinfo` has a `muscles` array of objects with `id` and `name`
+        exercise.muscles.some(muscle => muscle.id === parseInt(selectedMuscleGroup))
+      );
     }
 
-    // Debounce search
-    const timeoutId = setTimeout(searchExercises, 300);
-    return () => clearTimeout(timeoutId);
-  }, [searchTerm, selectedMuscleGroup]);
+    // 2. Filter by search term on the remaining items
+    if (searchTerm) {
+      const lowercasedTerm = searchTerm.toLowerCase();
+      result = result.filter(exercise =>
+        exercise.name.toLowerCase().includes(lowercasedTerm) ||
+        exercise.category.name.toLowerCase().includes(lowercasedTerm)
+      );
+    }
 
+    setFilteredExercises(result);
+  }, [searchTerm, selectedMuscleGroup, allExercises]); // Re-run this logic if filters or the master list change.
+
+  // --- Helper Functions ---
   const isExerciseSelected = (exerciseId) => {
     return selectedExercises.some(ex => ex.id === exerciseId);
   };
 
-  const handleExerciseClick = (exercise) => {
-    if (onExerciseSelect) {
-      onExerciseSelect(exercise);
-    }
-  };
-
-  if (loading && exercises.length === 0) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <div className="spinner w-12 h-12"></div>
-      </div>
-    );
+  // --- Render Logic ---
+  if (loading) {
+    return <div className="text-center p-6 text-text-secondary">Loading exercises...</div>;
   }
 
   if (error) {
     return (
       <div className="bg-red-900/20 border border-red-500/50 rounded-xl p-6 text-red-400">
-        <p className="font-medium text-lg">Error loading exercises:</p>
+        <p className="font-medium text-lg">Error:</p>
         <p>{error}</p>
       </div>
     );
   }
-
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Search and Filter Controls */}
