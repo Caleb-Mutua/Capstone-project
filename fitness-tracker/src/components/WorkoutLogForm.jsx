@@ -1,5 +1,4 @@
 // src/components/WorkoutLogForm.jsx (Refined for Better UX)
-
 import { useState } from 'react';
 import ExerciseList from './ExerciseList';
 
@@ -10,12 +9,14 @@ export default function WorkoutLogForm({ onSaveWorkout, onCancel }) {
   const [showExerciseList, setShowExerciseList] = useState(false);
   const [manualExerciseName, setManualExerciseName] = useState('');
 
+
   // --- Handlers (Your handlers are also well-written and remain the same) ---
   const addExercise = (exercise) => {
     if (exercises.some(ex => ex.id === exercise.id)) {
       alert('This exercise is already in your workout.');
       return;
     }
+
     const newExercise = {
       id: exercise.id,
       name: exercise.name,
@@ -23,28 +24,35 @@ export default function WorkoutLogForm({ onSaveWorkout, onCancel }) {
       muscles: exercise.muscles || [],
       sets: [{ reps: '', weight: '', rest: '' }]
     };
+
     setExercises(prevExercises => [...prevExercises, newExercise]);
     setShowExerciseList(false);
   };
   
+
   const handleAddManualExercise = () => {
     if (!manualExerciseName.trim()) {
       alert('Please enter an exercise name.');
       return;
     }
+
+
     if (exercises.some(ex => ex.name.toLowerCase() === manualExerciseName.trim().toLowerCase())) {
       alert('This exercise is already in your workout.');
       return;
     }
     const newExercise = {
       id: `manual-${Date.now()}`,
+
       name: manualExerciseName.trim(),
       category: 'Custom',
       muscles: [],
       sets: [{ reps: '', weight: '', rest: '' }]
     };
+
     setExercises(prevExercises => [...prevExercises, newExercise]);
     setManualExerciseName('');
+
   };
 
   const removeExercise = (index) => {
@@ -103,7 +111,9 @@ export default function WorkoutLogForm({ onSaveWorkout, onCancel }) {
       date: new Date().toISOString(),
       exercises: exercises.map(ex => ({
         ...ex,
+
         sets: ex.sets.filter(set => set.reps && set.weight) // Filter out empty sets on save
+
       }))
     };
     onSaveWorkout(workout);
@@ -116,6 +126,7 @@ export default function WorkoutLogForm({ onSaveWorkout, onCancel }) {
   // --- JSX (This is where the refinement happens) ---
   return (
     <div className="space-y-6">
+
       {/* Section 1: Workout Setup & Adding Exercises */}
       <div className="bg-background-medium p-6 rounded-lg shadow-lg">
         <h2 className="text-2xl font-bold mb-4">Log New Workout</h2>
@@ -220,6 +231,7 @@ export default function WorkoutLogForm({ onSaveWorkout, onCancel }) {
         >
           Save Workout
         </button>
+
       </div>
     </div>
   );
