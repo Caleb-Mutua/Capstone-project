@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, Link } from 'react
 import Navbar from './components/Navbar'; 
 import WorkoutLogForm from './components/WorkoutLogForm'; 
 import HistoryPage from './pages/HistoryPage'; 
-
 import './index.css';
 
 // --- A Simple Component for Your Homepage ---
@@ -19,13 +18,15 @@ function HomePage() {
         className="inline-block px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-lg transform hover:scale-105"
       >
         Log a New Workout
+
       </Link>
     </div>
   );
 }
 
-// --- Wrapper Component for the LogWorkout Form ---
-// This handles the logic for saving and canceling
+
+// A "wrapper" component to provide navigation logic to your form
+
 function LogWorkoutPage() {
   const navigate = useNavigate();
 
@@ -42,7 +43,8 @@ function LogWorkoutPage() {
     navigate('/'); // Redirect to homepage on cancel
   };
 
-  // Assuming your LogWorkout component is now the form: WorkoutLogForm
+
+
   return <WorkoutLogForm onSaveWorkout={handleSaveWorkout} onCancel={handleCancel} />;
 }
 
@@ -51,13 +53,17 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-100">
-        {/* 1. Navbar is placed here, so it appears on EVERY page */}
+
+        {/* 1. Navbar is placed here, OUTSIDE <Routes>, so it appears on every page */}
+
         <Navbar />
 
         {/* 2. Main content area where pages will be swapped */}
         <main className="container mx-auto p-4 md:p-6">
           <Routes>
-            {/* 3. Define a route for each page in your application */}
+
+            {/* 3. Define the route for each page */}
+
             <Route path="/" element={<HomePage />} />
             <Route path="/log" element={<LogWorkoutPage />} />
             <Route path="/history" element={<HistoryPage />} />

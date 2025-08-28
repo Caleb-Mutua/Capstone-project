@@ -1,3 +1,4 @@
+
 // src/components/Navbar.jsx (Upgraded and Responsive)
 
 import { useState } from 'react';
@@ -39,12 +40,16 @@ export default function Navbar() {
         {/* --- Desktop Menu Links --- */}
         {/* These links are hidden by default and shown on medium screens and up (hidden md:flex) */}
         <div className="hidden md:flex space-x-8 items-center">
+
+
           <NavLink
             to="/log"
             className={({ isActive }) =>
               isActive
+
                 ? "text-blue-600 font-semibold border-b-2 border-blue-600 pb-1"
                 : "text-gray-600 hover:text-blue-600 transition-colors"
+
             }
           >
             Log Workout
@@ -53,14 +58,17 @@ export default function Navbar() {
             to="/history"
             className={({ isActive }) =>
               isActive
+
                 ? "text-blue-600 font-semibold border-b-2 border-blue-600 pb-1"
                 : "text-gray-600 hover:text-blue-600 transition-colors"
+
             }
           >
             History & Progress
           </NavLink>
         </div>
       </nav>
+
 
       {/* --- Mobile Menu (Dropdown) --- */}
       {/* This menu appears below the navbar when isOpen is true */}
@@ -83,6 +91,7 @@ export default function Navbar() {
           </NavLink>
         </div>
       </div>
+
     </header>
   );
 }

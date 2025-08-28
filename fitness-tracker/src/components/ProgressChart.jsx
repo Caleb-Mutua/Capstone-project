@@ -5,6 +5,7 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
+
 // The component now accepts a 'metric' prop
 export default function ProgressChart({ workouts, exerciseName, metric }) {
   // We'll define these dynamically
@@ -12,6 +13,7 @@ export default function ProgressChart({ workouts, exerciseName, metric }) {
   let chartUnit = '';
 
   // 1. Transform the raw workout data based on the selected metric
+
   const chartDataPoints = workouts
     .map(workout => {
       // Find the specific exercise within the workout
@@ -21,6 +23,7 @@ export default function ProgressChart({ workouts, exerciseName, metric }) {
       
       if (!exercise) return null; // Ignore workouts where this exercise wasn't done
       
+
       let value = 0;
       // This switch statement is the new core logic
       switch (metric) {
@@ -49,6 +52,7 @@ export default function ProgressChart({ workouts, exerciseName, metric }) {
       }
       
       return { date: workout.date, value }; // We use a generic 'value' property
+
     })
     .filter(Boolean) // Remove any nulls
     .sort((a, b) => new Date(a.date) - new Date(b.date)); // Ensure dates are in order
@@ -60,6 +64,7 @@ export default function ProgressChart({ workouts, exerciseName, metric }) {
       label: `${chartLabel} (${chartUnit})`, // Dynamic label
       data: chartDataPoints.map(p => p.value), // Use the generic 'value'
       borderColor: '#3B82F6',
+
       backgroundColor: 'rgba(59, 130, 246, 0.2)',
       fill: true,
       tension: 0.2
@@ -69,11 +74,13 @@ export default function ProgressChart({ workouts, exerciseName, metric }) {
   const options = {
     responsive: true,
     plugins: {
-      legend: { position: 'top', labels: { color: '#F9FAFB' } },
+
+      legend: { position: 'top', labels: { color: '#F9FAFB' } }, // text-text-primary
       title: { display: true, text: 'Progress Over Time', color: '#F9FAFB' },
     },
     scales: {
-      y: { beginAtZero: true, ticks: { color: '#9CA3AF' } },
+      y: { beginAtZero: true, ticks: { color: '#9CA3AF' } }, // text-text-secondary
+
       x: { ticks: { color: '#9CA3AF' } }
     }
   };
