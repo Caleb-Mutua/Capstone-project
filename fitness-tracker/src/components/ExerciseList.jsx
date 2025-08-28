@@ -1,131 +1,174 @@
-// src/components/ExerciseList.jsx (Verified and Refined)
+// src/components/ExerciseList.jsx 
 
 import { useState, useEffect } from 'react';
-
-// REFINED: Your wger.js file should export these functions
 import { fetchAllExercises, fetchMuscleGroups } from '../api/wger'; // Adjust path if needed
 
-export default function ExerciseList({ onExerciseSelect, selectedExercises = [] }) {
-  // --- State Management ---
-  // REFINED: We now have a "master list" and a "filtered list"
-  const [allExercises, setAllExercises] = useState([]); // Master list from API, never changes.
-  const [filteredExercises, setFilteredExercises] = useState([]); // The list that gets displayed.
-  
-  const [muscleGroups, setMuscleGroups] = useState([]);
+function ExerciseCard({ exercise, isSelected, onSelect, animationDelay }) {
+  return (
+    <div
+      onClick={() => onSelect(exercise)}
+      className={`card p-6 cursor-pointer hover-lift group animate-fade-in ${
+        isSelected ? 'ring-2 ring-primary shadow-glow' : 'hover:ring-2 hover:ring-primary/30'
+      }`}
+      style={{ animationDelay: `${animationDelay}ms` }}
+    >
+      <div className="flex items-start justify-between mb-4">
+        <h3 className="font-bold text-xl text-primary group-hover:text-primary-light transition-colors">
+          {exercise.name}
+        </h3>
+        {isSelected && (
+          <span className="badge-success">✓ Selected</span>
+        )}
+      </div>
+      
+      {exercise.category?.name && (
+        <div className="badge-primary mb-3">{exercise.category.name}</div>
+      )}
+      
+      {exercise.muscles?.length > 0 && (
+        <div className="mb-4">
+          <p className="text-xs text-text-muted mb-2 uppercase tracking-wide font-medium">Targeted Muscles</p>
+          <div className="flex flex-wrap gap-2">
+            {exercise.muscles.slice(0, 3).map(muscle => (
+              <span key={muscle.id} className="badge-accent">{muscle.name}</span>
+            ))}
+            {exercise.muscles.length > 3 && (
+              <span className="badge-secondary">+{exercise.muscles.length - 3}</span>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {exercise.description && (
+        <div 
+          className="text-sm text-text-secondary line-clamp-3 leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: exercise.description }} 
+        />
+      )}
+    </div>
+  );
+}
 
+
+export default function ExerciseList({ onExerciseSelect, selectedExercises = [] }) {
+  const [allExercises, setAllExercises] = useState([]);
+  const [filteredExercises, setFilteredExercises] = useState([]);
+  const [muscleGroups, setMuscleGroups] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMuscleGroup, setSelectedMuscleGroup] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-
-  // --- Effect 1: Fetch all data ONCE on component mount ---
   useEffect(() => {
     async function loadInitialData() {
       try {
         setLoading(true);
         setError(null);
-        
-        // Fetch both lists in parallel for efficiency
         const [exercisesData, muscleGroupsData] = await Promise.all([
           fetchAllExercises(),
           fetchMuscleGroups()
         ]);
-
-        setAllExercises(exercisesData); // Set the master list
-        setFilteredExercises(exercisesData); // Initially, the filtered list is the same
+        setAllExercises(exercisesData);
+        setFilteredExercises(exercisesData);
         setMuscleGroups(muscleGroupsData);
-
       } catch (err) {
         setError(err.message || 'Failed to load data.');
       } finally {
         setLoading(false);
       }
     }
-
-    
     loadInitialData();
-  }, []); // Empty array ensures this runs only once.
+  }, []);
 
-  // --- Effect 2: Perform CLIENT-SIDE filtering whenever filters change ---
-  // FIXED: This effect no longer makes API calls. It's now instant.
   useEffect(() => {
-    let result = [...allExercises]; // Start with the full master list
+    let result = [...allExercises];
 
-    // 1. Filter by selected muscle group first
     if (selectedMuscleGroup) {
-      result = result.filter(exercise => 
-        // WGER `exerciseinfo` has a `muscles` array of objects with `id` and `name`
-        exercise.muscles.some(muscle => muscle.id === parseInt(selectedMuscleGroup))
+      result = result.filter(ex =>
+        ex.muscles?.some(muscle => muscle.id === parseInt(selectedMuscleGroup))
       );
     }
 
-    // 2. Filter by search term on the remaining items
     if (searchTerm) {
       const lowercasedTerm = searchTerm.toLowerCase();
-      result = result.filter(exercise =>
-        exercise.name.toLowerCase().includes(lowercasedTerm) ||
-        exercise.category.name.toLowerCase().includes(lowercasedTerm)
+      result = result.filter(ex =>
+        ex.name?.toLowerCase().includes(lowercasedTerm) ||
+        ex.category?.name?.toLowerCase().includes(lowercasedTerm)
       );
     }
 
     setFilteredExercises(result);
-  }, [searchTerm, selectedMuscleGroup, allExercises]); // Re-run this logic if filters or the master list change.
+}, [searchTerm, selectedMuscleGroup, allExercises]);
 
-  // --- Helper Functions ---
-  const isExerciseSelected = (exerciseId) => {
-    return selectedExercises.some(ex => ex.id === exerciseId);
-  };
+  const selectedExerciseIds = new Set(selectedExercises.map(ex => ex.id));
 
-  // --- Render Logic ---
   if (loading) {
-    return <div className="text-center p-6 text-text-secondary">Loading exercises...</div>;
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="spinner w-12 h-12"></div>
+      </div>
+    );
   }
 
   if (error) {
     return (
       <div className="bg-red-900/20 border border-red-500/50 rounded-xl p-6 text-red-400">
-        <p className="font-medium text-lg">Error:</p>
+        <p className="font-medium text-lg">Error loading exercises:</p>
         <p>{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <input
-        type="text"
-        placeholder="Search exercises by name or category..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="w-full p-3 bg-background-dark border border-border rounded-lg text-text-primary placeholder:text-text-secondary focus:ring-2 focus:ring-primary focus:outline-none"
-      />
+    <div className="space-y-6 animate-fade-in">
+      <div className="space-y-4">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search exercises by name or category..."
+            value={searchTerm}
+            // FIXED: Corrected the typo from e.g.et.value to e.target.value
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="input text-lg pr-12"
+          />
+          <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-text-muted">🔍</div>
+        </div>
+        
+        <select
+          value={selectedMuscleGroup}
+          onChange={(e) => setSelectedMuscleGroup(e.target.value)}
+          className="input"
+        >
+          <option value="">All Muscle Groups</option>
+          {muscleGroups.map(muscle => (
+            <option key={muscle.id} value={muscle.id}>{muscle.name}</option>
+          ))}
+        </select>
+      </div>
 
-      {loading && <p className="text-text-secondary">Loading exercises...</p>}
-      
-      {error && <p className="text-red-400">Error: {error}</p>}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredExercises.length > 0 ? (
+          filteredExercises.map((exercise, index) => (
+            <ExerciseCard
+              key={exercise.id}
+              exercise={exercise}
+              isSelected={selectedExerciseIds.has(exercise.id)}
+              onSelect={onExerciseSelect}
+              animationDelay={index * 50}
+            />
+          ))
+        ) : (
+          <div className="col-span-full text-center py-16 text-text-secondary">
+            <div className="text-6xl mb-4">🤷</div>
+            <p className="text-lg font-medium">No exercises found</p>
+            <p className="text-sm mt-2">Try adjusting your search terms or muscle group filter.</p>
+          </div>
+        )}
+      </div>
 
-      {!loading && !error && (
-        <div className="max-h-64 overflow-y-auto space-y-2 pr-2">
-          {filteredExercises.length > 0 ? (
-            filteredExercises.map(exercise => (
-              <div key={exercise.id} className="flex items-center justify-between p-3 bg-background-dark rounded-lg">
-                <div>
-                  <h4 className="font-medium">{exercise.name}</h4>
-                  <p className="text-sm text-text-secondary">{exercise.category.name}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onExerciseSelect(exercise)}
-                  disabled={selectedIds.has(exercise.id)}
-                  className="px-4 py-2 bg-primary text-text-primary rounded-lg text-sm font-medium transition-colors hover:bg-primary/90 disabled:bg-gray-500 disabled:cursor-not-allowed"
-                >
-                  {selectedIds.has(exercise.id) ? 'Added' : 'Add'}
-                </button>
-              </div>
-            ))
-          ) : (
-            <p className="text-text-secondary">No exercises found.</p>
-          )}
+      {!loading && (
+        <div className="text-center py-4 text-text-secondary">
+          <p>Showing {filteredExercises.length} of {allExercises.length} exercises</p>
         </div>
       )}
     </div>
