@@ -1,258 +1,225 @@
+// src/components/WorkoutLogForm.jsx (Refined for Better UX)
 
-// src/components/WorkoutLogForm.jsx (Verified and Corrected)
-
-import { useState, useEffect } from 'react';
-// FIXED: Import the API function from your dedicated API file
-import { fetchAllExercises } from '../api/wger'; // Adjust the path if it's different
-
-// --- Helper Functions (These are good and can stay) ---
-const generateNumericOptions = (start, end) => {
-  const options = [];
-  for (let i = start; i <= end; i++) {
-    options.push({ value: i, label: `${i}` });
-  }
-  return options;
-};
-
-const generateWeightOptions = (start, end, step) => {
-  const options = [];
-  for (let i = start; i <= end; i += step) {
-    options.push({ value: i.toFixed(2), label: `${i.toFixed(2)} kg` });
-  }
-  return options;
-};
-
-// Pre-generate the options
-const SETS_OPTIONS = generateNumericOptions(1, 10);
-const REPS_OPTIONS = generateNumericOptions(1, 30);
-const WEIGHT_OPTIONS = generateWeightOptions(2.5, 200, 1.25);
-
-
+import { useState } from 'react';
+import ExerciseList from './ExerciseList';
 
 export default function WorkoutLogForm({ onSaveWorkout, onCancel }) {
-  // Overall workout state
+  // --- State Management (Your state logic is solid and remains the same) ---
+  const [exercises, setExercises] = useState([]);
   const [workoutName, setWorkoutName] = useState('');
-  const [currentWorkout, setCurrentWorkout] = useState([]);
+  const [showExerciseList, setShowExerciseList] = useState(false);
+  const [manualExerciseName, setManualExerciseName] = useState('');
 
-  // State for the form itself
-  const [apiExercises, setApiExercises] = useState([]);
-  const [selectedExerciseId, setSelectedExerciseId] = useState('');
-  const [numberOfSets, setNumberOfSets] = useState(3);
-  
-  // FIXED: Initialize setsData with unique objects for each set
-  const [setsData, setSetsData] = useState(() => 
-    Array.from({ length: 3 }, () => ({ reps: '8', weight: '20' }))
-  );
-  
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Fetch exercises from API on component mount
-  useEffect(() => {
-    async function loadExercises() {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await fetchAllExercises(); // Now uses the correct, imported function
-        console.log("Verifying first exercise from API:", data[0]); 
-        setApiExercises(data);
-      } catch (err) {
-        setError(err.message || 'Could not load exercises.');
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadExercises();
-  }, []);
-
-  // This effect correctly syncs the setsData array when numberOfSets changes
-  useEffect(() => {
-    setSetsData(currentSets => {
-      const newSetsData = Array.from({ length: numberOfSets }, (_, index) => {
-        return currentSets[index] || { reps: '8', weight: '20' };
-      });
-      return newSetsData;
-    });
-  }, [numberOfSets]);
-
-  const handleSetDataChange = (index, field, value) => {
-    // FIXED: Use .map to create a new array with a new object for the changed set (immutable update)
-    const newSetsData = setsData.map((set, i) => {
-      if (i === index) {
-        return { ...set, [field]: value }; // Create a new object for the item we want to change
-      }
-      return set; // Return the original object for all other items
-    });
-    setSetsData(newSetsData);
-  };
-
-
-  const handleAddExerciseToWorkout = () => {
-    if (!selectedExerciseId) {
-      alert('Please select an exercise.');
+  // --- Handlers (Your handlers are also well-written and remain the same) ---
+  const addExercise = (exercise) => {
+    if (exercises.some(ex => ex.id === exercise.id)) {
+      alert('This exercise is already in your workout.');
       return;
     }
-    const selectedExerciseData = apiExercises.find(ex => ex.id === parseInt(selectedExerciseId));
-
     const newExercise = {
-      id: selectedExerciseData.id,
-      name: selectedExerciseData.name_translations?.en || selectedExerciseData.name || "Unnamed Exercise",
-      category: selectedExerciseData.category, // still just ID
-      sets: setsData,
+      id: exercise.id,
+      name: exercise.name,
+      category: exercise.category?.name || 'Unknown',
+      muscles: exercise.muscles || [],
+      sets: [{ reps: '', weight: '', rest: '' }]
     };
-
-    
-    
-    setCurrentWorkout([...currentWorkout, newExercise]);
-
-
-    // Reset the form for the next exercise
-    setSelectedExerciseId('');
-    setNumberOfSets(3);
-    // FIXED: Reset with unique objects
-    setSetsData(Array.from({ length: 3 }, () => ({ reps: '8', weight: '20' })));
+    setExercises(prevExercises => [...prevExercises, newExercise]);
+    setShowExerciseList(false);
   };
-
-
-  const handleSubmit = () => {
-    if (currentWorkout.length === 0) {
-      alert('Please add at least one exercise to your workout.');
+  
+  const handleAddManualExercise = () => {
+    if (!manualExerciseName.trim()) {
+      alert('Please enter an exercise name.');
       return;
     }
-    const finalWorkout = {
-
-      id: Date.now(),
-      name: workoutName || `Workout on ${new Date().toLocaleDateString()}`,
-      date: new Date().toISOString(),
-
-      exercises: currentWorkout,
+    if (exercises.some(ex => ex.name.toLowerCase() === manualExerciseName.trim().toLowerCase())) {
+      alert('This exercise is already in your workout.');
+      return;
+    }
+    const newExercise = {
+      id: `manual-${Date.now()}`,
+      name: manualExerciseName.trim(),
+      category: 'Custom',
+      muscles: [],
+      sets: [{ reps: '', weight: '', rest: '' }]
     };
-    onSaveWorkout(finalWorkout);
-
+    setExercises(prevExercises => [...prevExercises, newExercise]);
+    setManualExerciseName('');
   };
+
+  const removeExercise = (index) => {
+    setExercises(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateSet = (exerciseIndex, setIndex, field, value) => {
+    setExercises(prev => 
+      prev.map((ex, i) => {
+        if (i === exerciseIndex) {
+          const newSets = ex.sets.map((set, j) => {
+            if (j === setIndex) {
+              return { ...set, [field]: value };
+            }
+            return set;
+          });
+          return { ...ex, sets: newSets };
+        }
+        return ex;
+      })
+    );
+  };
+
+  const addSet = (exerciseIndex) => {
+    setExercises(prev => 
+      prev.map((ex, i) => {
+        if (i === exerciseIndex) {
+          return { ...ex, sets: [...ex.sets, { reps: '', weight: '', rest: '' }] };
+        }
+        return ex;
+      })
+    );
+  };
+
+  const removeSet = (exerciseIndex, setIndex) => {
+    setExercises(prev => 
+      prev.map((ex, i) => {
+        if (i === exerciseIndex && ex.sets.length > 1) {
+          const newSets = ex.sets.filter((_, j) => j !== setIndex);
+          return { ...ex, sets: newSets };
+        }
+        return ex;
+      })
+    );
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (exercises.length === 0) {
+      alert('Please add at least one exercise.');
+      return;
+    }
+    const workout = {
+      id: Date.now(),
+      name: workoutName.trim() || `Workout on ${new Date().toLocaleDateString()}`,
+      date: new Date().toISOString(),
+      exercises: exercises.map(ex => ({
+        ...ex,
+        sets: ex.sets.filter(set => set.reps && set.weight) // Filter out empty sets on save
+      }))
+    };
+    onSaveWorkout(workout);
+  };
+
+  const totalVolume = exercises.reduce((total, ex) => 
+    total + ex.sets.reduce((exTotal, set) => 
+      exTotal + (parseInt(set.reps) || 0) * (parseFloat(set.weight) || 0), 0), 0);
+
+  // --- JSX (This is where the refinement happens) ---
   return (
     <div className="space-y-6">
-
-      {/* Section 1: Main Form */}
+      {/* Section 1: Workout Setup & Adding Exercises */}
       <div className="bg-background-medium p-6 rounded-lg shadow-lg">
         <h2 className="text-2xl font-bold mb-4">Log New Workout</h2>
         <input
           type="text"
-          placeholder="Workout Name (e.g., Push Day)"
+          placeholder="Workout Name (e.g., Chest Day)"
           value={workoutName}
           onChange={(e) => setWorkoutName(e.target.value)}
-          className="w-full p-3 bg-background-dark border border-border rounded-lg mb-6"
+          className="w-full p-3 bg-background-dark border border-border rounded-lg mb-4"
         />
-        <div className="border-t border-border pt-4">
-          <h3 className="text-xl font-semibold mb-3">Add an Exercise</h3>
-          <select
-            value={selectedExerciseId}
-            onChange={(e) => setSelectedExerciseId(e.target.value)}
-            disabled={loading || error}
-            className="w-full p-3 bg-background-dark text-text-primary border border-border rounded-lg mb-4"
-          >
-            <option 
-              value=""
-              className="bg-background-medium text-text-secondary"              
-              >
-                {loading ? 'Loading exercises...' : error ? error : '-- Select an Exercise --'}
-                </option>
-               {/* 🔎 Debug log here */}
-               {console.log("Exercise check:", apiExercises.map(ex => ({
-                 id: ex.id,
-                 name: ex.name,
-                 translations: ex.name_translations,
-                 category: ex.category
-                })))}
-              
-              {/* FIXED: Added classes directly to the <option> tag */}
-              {apiExercises.map(ex => (
-              <option 
-                key={ex.id} 
-                value={ex.id}
-                // This is the critical fix. It forces each option to have your theme's colors.
-                className="bg-background-medium text-text-primary"
-              >
-                {ex.name || ex.name_translations?.en || "Unnamed Exercise"}
-                </option>
-              ))}
-            </select>
-            
-          {/* NEW: Dropdown to control the number of sets */}
-          <div className="mb-4">
-              <label htmlFor="numSets" className="block text-sm font-medium text-text-secondary mb-1">Number of Sets</label>
-              <select 
-                id="numSets" 
-                value={numberOfSets} 
-                onChange={(e) => setNumberOfSets(Number(e.target.value))}
-                className="w-full p-3 bg-background-dark text-text-primary border border-border rounded-lg"
-              >
-                  {SETS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}className="bg-background-medium text-text-primary"
-                  >
-                    {opt.label}</option>)}
-              </select>
-          </div>
-
-          {/* Dynamically rendered dropdowns for each set */}
-          {setsData.map((set, index) => (
-            <div key={index} className="flex items-center gap-3 mb-3 p-3 bg-background-dark rounded-md">
-              <span className="text-sm font-medium text-text-secondary w-1/4">Set {index + 1}</span>
-              <select value={set.reps} onChange={(e) => handleSetDataChange(index, 'reps', e.target.value)} className="w-1/2 p-2 bg-background-dark text-text-primary border border-border rounded-lg">
-                {REPS_OPTIONS.map(opt => <option key={opt.value} value={opt.value} className="bg-
-                background-medium text-text-primary">{opt.label} 
-                reps</option>)}
-              </select>
-              <select value={set.weight} onChange={(e) => handleSetDataChange(index, 'weight',
-               e.target.value)} className="w-1/2 p-2 bg-background-dark text-text-primary border border-border 
-               rounded-lg">
-                {WEIGHT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}className="bg-background-medium text-text-primary">{opt.label}</option>)}
-              </select>
+        <div className="border-t border-border pt-4 space-y-3">
+            <h3 className="text-lg font-semibold">Add Exercises to Your Workout</h3>
+            <div className="flex items-center gap-2">
+                <input
+                type="text"
+                placeholder="Type to add an exercise manually"
+                value={manualExerciseName}
+                onChange={(e) => setManualExerciseName(e.target.value)}
+                className="flex-1 p-3 bg-background-dark border border-border rounded-lg"
+                />
+                <button
+                type="button"
+                onClick={handleAddManualExercise}
+                className="px-6 py-3  bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-color"
+                >
+                Add
+                </button>
             </div>
-          ))}
-
-          <div className="flex justify-end mt-4">
+            <div className="text-center text-text-secondary">or</div>
             <button
               type="button"
-              onClick={handleAddExerciseToWorkout}
-              className="px-6 py-2 bg-primary text-text-primary rounded-lg hover:bg-primary/90 font-medium"
+              onClick={() => setShowExerciseList(true)}
+              className="w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-color shadow-md"
             >
-              Add Exercise to Workout
+              Browse Full Exercise List
             </button>
-
-          </div>
         </div>
       </div>
 
-
-      {/* --- Section 2: Current Workout Summary --- */}
-      {currentWorkout.length > 0 && (
-        <div className="bg-background-medium p-6 rounded-lg shadow-lg">
-          <h3 className="text-xl font-bold mb-4">Current Workout Summary</h3>
-          <div className="space-y-3">
-            {currentWorkout.map((ex, index) => (
-              <div key={index} className="flex justify-between items-center p-3 bg-background-dark rounded-md">
-                <span className="font-semibold">{ex.name}</span>
-                <span className="text-text-secondary">{ex.sets.length} {ex.sets.length > 1 ? 'sets' : 'set'}</span>
+      {/* A modal-like view for the full exercise list */}
+      {showExerciseList && (
+        // The backdrop is perfect, no changes needed here
+        <div className="fixed inset-0 bg-black/60 z-40 flex justify-center items-center p-4 animate-fade-in-fast">
+            
+            {/* FIXED: Replaced the custom color with a standard Tailwind color */}
+            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl">
+              
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold">Select Exercises from List</h3>
+                <button onClick={() => setShowExerciseList(false)} className="text-2xl">&times;</button>
               </div>
-            ))}
-          </div>
+              <ExerciseList 
+                onExerciseSelect={addExercise}
+                selectedExercises={exercises}
+              />
+            </div>
         </div>
       )}
 
-      {/* --- Section 3: Final Action Buttons --- */}
+      {/* Section 2: Logging Details for Added Exercises */}
+      {exercises.length > 0 && (
+        <div className="bg-background-medium p-6 rounded-lg shadow-lg space-y-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-bold">Your Workout Plan</h3>
+            <div className="text-text-secondary">
+              <span className="font-medium">Total Volume:</span> {totalVolume.toFixed(1)} kg
+            </div>
+          </div>
+          {exercises.map((exercise, exIndex) => (
+             <div key={exercise.id} className="border-t border-border/50 pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-lg text-primary">{exercise.name}</h4>
+                 <button type="button" onClick={() => removeExercise(exIndex)} className="text-red-500 hover:text-red-400 text-sm">Remove</button>
+              </div>
+              <div className="space-y-2">
+                {exercise.sets.map((set, setIndex) => (
+                  <div key={setIndex} className="grid grid-cols-12 gap-2 items-center">
+                    <span className="col-span-1 text-sm text-text-secondary">Set {setIndex + 1}</span>
+                    <input type="number" placeholder="Reps" value={set.reps} onChange={(e) => updateSet(exIndex, setIndex, 'reps', e.target.value)} className="col-span-3 p-2 rounded bg-background-dark border border-border" />
+                    <input type="number" placeholder="Weight (kg)" value={set.weight} onChange={(e) => updateSet(exIndex, setIndex, 'weight', e.target.value)} className="col-span-3 p-2 rounded bg-background-dark border border-border" />
+                    <input type="number" placeholder="Rest (s)" value={set.rest} onChange={(e) => updateSet(exIndex, setIndex, 'rest', e.target.value)} className="col-span-4 p-2 rounded bg-background-dark border border-border" />
+                    {exercise.sets.length > 1 && (
+                      <button type="button" onClick={() => removeSet(exIndex, setIndex)} className="col-span-1 text-red-500 hover:text-red-400 text-center">×</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <button type="button" onClick={() => addSet(exIndex)} className="text-sm text-primary hover:underline mt-2">+ Add Set</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Section 3: Final Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <button type="button" onClick={onCancel} className="flex-1 px-6 py-3 bg-blue- text-text-primary rounded-lg hover:bg-gray-500 font-medium">
-          Cancel
-        </button>
+        <button type="button" onClick={onCancel} className="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-color shadow-md ">Cancel</button>
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={currentWorkout.length === 0}
-          className="flex-1 px-6 py-3 bg-success text-text-primary rounded-lg hover:bg-success/90 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={exercises.length === 0}
+          className="flex-1 px-6 py-3  bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-color disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
         >
-          Save Full Workout
+          Save Workout
         </button>
-
       </div>
     </div>
   );

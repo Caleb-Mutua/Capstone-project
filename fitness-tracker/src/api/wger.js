@@ -1,32 +1,27 @@
-// src/api/wger.js (Refined)
+// src/api/wger.js (The Final, Verified Version)
 
 const API_URL = 'https://wger.de/api/v2';
 const API_KEY = import.meta.env.VITE_WGER_API_KEY;
 
 /**
- * A centralized API client to handle all fetch requests.
- * It automatically adds the Authorization header and handles response errors.
+ * A centralized API client that handles all fetch requests.
+ * It adds the Authorization header and provides clear error messages.
  * @param {string} endpoint The API endpoint to call (e.g., '/exerciseinfo/')
- * @param {object} options The options for the fetch call
- * @returns {Promise<any>} The JSON response data
+ * @returns {Promise<any>} The JSON response data from the API
  */
-async function apiClient(endpoint, options = {}) {
-  const headers = { ...options.headers };
-
-  // Only add Authorization header if API_KEY exists
-  if (API_KEY) {
-    headers['Authorization'] = `Token ${API_KEY}`;
+async function apiClient(endpoint) {
+  // 1. Fail Fast: Check for the key immediately.
+  if (!API_KEY) {
+    throw new Error('API Key is missing. Check your .env file and ensure it is named VITE_WGER_API_KEY.');
   }
 
   const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers,
+    headers: { 'Authorization': `Token ${API_KEY}` },
   });
 
+  // 2. Handle HTTP response errors
   if (!response.ok) {
-    if (response.status === 403) {
-      throw new Error('API request failed: Invalid API Key.');
-    }
+    if (response.status === 403) throw new Error('API request failed: Invalid API Key.');
     throw new Error(`API request failed with status: ${response.status}`);
   }
 
@@ -34,16 +29,32 @@ async function apiClient(endpoint, options = {}) {
 }
 
 /**
- * Fetches the main list of all exercises. This is what you'll use for your dropdowns.
- * @returns {Promise<Array>} A list of exercise objects.
+ * Fetches and normalizes the main list of all exercises for your components.
+ * @returns {Promise<Array>} A clean list of exercise objects.
  */
 export async function fetchAllExercises() {
-  const response = await fetch('https://wger.de/api/v2/exercise/?limit=300');
-  const data = await response.json();
-  return data.results; // not data
+  try {
+    // CORRECT: Now uses the apiClient for consistent authentication.
+    // CORRECT: Using the '/exerciseinfo/' endpoint for rich data.
+    const data = await apiClient('/exerciseinfo/?language=2&limit=300');
+    
+    // BEST PRACTICE: Normalize the data to fix API inconsistencies.
+    const normalizedData = data.results
+      .map(ex => {
+        const normalizedName = ex.name_translations?.en?.trim() || ex.name?.trim();
+        if (normalizedName) {
+          return { ...ex, name: normalizedName };
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    return normalizedData;
+  } catch (error) {
+    console.error("Error in fetchAllExercises:", error);
+    throw error;
+  }
 }
-
-
 
 /**
  * Fetches the list of all available muscle groups.
@@ -52,13 +63,9 @@ export async function fetchAllExercises() {
 export async function fetchMuscleGroups() {
   try {
     const data = await apiClient('/muscle/');
-    
     return data.results;
   } catch (error) {              
     console.error("Error in fetchMuscleGroups:", error);
     throw error;
   }
 }
-
-// You can add other specific functions like fetchExerciseDetails if you need them
-// export async function fetchExerciseDetails(exerciseId) { ... }
