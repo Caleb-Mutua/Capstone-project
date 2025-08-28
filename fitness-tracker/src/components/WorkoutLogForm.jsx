@@ -3,14 +3,13 @@ import { useState } from 'react';
 import ExerciseList from './ExerciseList';
 
 export default function WorkoutLogForm({ onSaveWorkout, onCancel }) {
-  // --- State Management (Your state logic is solid and remains the same) ---
+  // --- State Management  ---
   const [exercises, setExercises] = useState([]);
   const [workoutName, setWorkoutName] = useState('');
   const [showExerciseList, setShowExerciseList] = useState(false);
   const [manualExerciseName, setManualExerciseName] = useState('');
 
-
-  // --- Handlers (Your handlers are also well-written and remain the same) ---
+  // --- Handlers ---
   const addExercise = (exercise) => {
     if (exercises.some(ex => ex.id === exercise.id)) {
       alert('This exercise is already in your workout.');

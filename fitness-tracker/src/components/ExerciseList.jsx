@@ -127,7 +127,7 @@ export default function ExerciseList({ onExerciseSelect, selectedExercises = [] 
             type="text"
             placeholder="Search exercises by name or category..."
             value={searchTerm}
-            // FIXED: Corrected the typo from e.g.et.value to e.target.value
+            
             onChange={(e) => setSearchTerm(e.target.value)}
             className="input text-lg pr-12"
           />

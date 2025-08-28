@@ -34,8 +34,7 @@ async function apiClient(endpoint) {
  */
 export async function fetchAllExercises() {
   try {
-    // CORRECT: Now uses the apiClient for consistent authentication.
-    // CORRECT: Using the '/exerciseinfo/' endpoint for rich data.
+   
     const data = await apiClient('/exerciseinfo/?language=2&limit=300');
     
     // BEST PRACTICE: Normalize the data to fix API inconsistencies.
