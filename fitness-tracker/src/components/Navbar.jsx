@@ -12,8 +12,8 @@ export default function Navbar() {
   const closeMenu = () => setIsOpen(false);
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50">
-      <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
+    <header className="bg-gray-900 shadow-md sticky top-0 z-50">
+      <nav className= "bg-gray-900 container mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo/Brand Name */}
         <NavLink to="/" className="text-2xl font-bold text-blue-800" onClick={closeMenu}>
           FitTrack

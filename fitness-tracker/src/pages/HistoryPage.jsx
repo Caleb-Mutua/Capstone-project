@@ -53,10 +53,10 @@ export default function HistoryPage() {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 bg-gray-900">
 
       {/* --- NEW: High-Level Stats Section --- */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-white">
         <StatCard title="Total Workouts" value={totalWorkouts} />
         <StatCard title="Overall Volume" value={overallVolume.toLocaleString()} unit="kg" />
         <StatCard title="Average Reps / Set" value={averageReps} />
@@ -64,17 +64,17 @@ export default function HistoryPage() {
 
       {/* --- ENHANCED: Progress Tracking Section --- */}
 
-      <div className="bg-background-medium p-6 rounded-lg">
-        <h2 className="text-2xl font-bold mb-4">Track Your Progress</h2>
+      <div className="bg-background-medium p-6 rounded-lg  ">
+        <h2 className="text-2xl  text-white font-bold mb-4">Track Your Progress</h2>
         {workouts.length > 0 ? (
           <>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-amber-50 ">
               {/* Exercise Dropdown (your existing code) */}
               <select
                 value={selectedExercise}
                 onChange={(e) => setSelectedExercise(e.target.value)}
-                className="w-full p-3 bg-background-dark border border-border rounded-lg text-text-primary placeholder:text-text-secondary focus:ring-2 focus:ring-primary focus:outline-none"
+                className="w-full p-3 bg-background-dark border border-border rounded-lg text-text-primary  placeholder:text-text-secondary focus:ring-2 focus:ring-primary focus:outline-none"
               >
                 <option value="">-- Select an exercise --</option>
                 {allExercises.map(name => (

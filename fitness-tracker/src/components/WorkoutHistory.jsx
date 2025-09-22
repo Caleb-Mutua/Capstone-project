@@ -22,8 +22,8 @@ export default function WorkoutHistory() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Workout History</h1>
+    <div className="space-y-6 text-white">
+      <h1 className="text-3xl  font-bold">Workout History</h1>
       {workouts.map(workout => (
         <div key={workout.id} className="bg-background-medium p-6 rounded-lg shadow-lg">
           

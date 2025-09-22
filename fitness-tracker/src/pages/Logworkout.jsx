@@ -34,7 +34,7 @@ export default function LogWorkout() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className=" h-screen bg-gray-900 max-w-4xl mx-auto ">
       <WorkoutLogForm 
         onSaveWorkout={handleSaveWorkout}
         onCancel={handleCancel}
