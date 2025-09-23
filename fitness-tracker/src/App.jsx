@@ -12,7 +12,7 @@ function HomePage() {
   const [displayText, setDisplayText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
   const fullText = 'Welcome to Your Fitness Journey!';
-  const typingSpeed = 200; // milliseconds per character
+  const typingSpeed = 100; // milliseconds per character
   const repeatDelay = 2000; 
   useEffect(() => {
     let timeoutId;
