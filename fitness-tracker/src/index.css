@@ -3,3 +3,23 @@
 body{
   @apply bg-gray-900;
 }
+/* Typing effect cursor */
+.cursor {
+  font-weight: 100;
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 2px;
+  background-color: #2563eb;
+  width: 3px;
+  height: 1.25em;
+  animation: blink 0.8s infinite;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
