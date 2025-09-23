@@ -3,14 +3,15 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, Link } from 'react
 import Navbar from './components/Navbar'; 
 import WorkoutLogForm from './components/WorkoutLogForm'; 
 import HistoryPage from './pages/HistoryPage'; 
+
 import './index.css';
 
 // --- A Simple Component for Your Homepage ---
 function HomePage() {
   return (
-    <div className="text-center py-20 bg-white rounded-lg shadow-xl">
+    <div className="bg-gray-900 min-h-screen flex flex-col items-center justify-center text-center px-4 md:px-6 py-12 rounded-lg shadow-xl ">
       <h1 className="text-4xl font-bold mb-4 text-blue-800">Welcome to Your Fitness Journey!</h1>
-      <p className="text-gray-600 text-lg mb-8">
+      <p className="text-gray-600 text-base sm:text-lg mb-8">
         Track your workouts, see your progress, and reach your goals.
       </p>
       <Link
@@ -52,7 +53,7 @@ function LogWorkoutPage() {
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-gray-950">
 
         {/* 1. Navbar is placed here, OUTSIDE <Routes>, so it appears on every page */}
 
@@ -63,8 +64,9 @@ function App() {
           <Routes>
 
             {/* 3. Define the route for each page */}
-
+            
             <Route path="/" element={<HomePage />} />
+            
             <Route path="/log" element={<LogWorkoutPage />} />
             <Route path="/history" element={<HistoryPage />} />
           </Routes>

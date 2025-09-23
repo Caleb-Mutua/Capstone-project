@@ -12,8 +12,8 @@ export default function Navbar() {
   const closeMenu = () => setIsOpen(false);
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50">
-      <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
+    <header className="bg-gray-900 shadow-md sticky top-0 z-50">
+      <nav className= "bg-gray-900 container mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo/Brand Name */}
         <NavLink to="/" className="text-2xl font-bold text-blue-800" onClick={closeMenu}>
           FitTrack
@@ -39,7 +39,7 @@ export default function Navbar() {
 
         {/* --- Desktop Menu Links --- */}
         {/* These links are hidden by default and shown on medium screens and up (hidden md:flex) */}
-        <div className="hidden md:flex space-x-8 items-center">
+        <div className="hidden md:flex space-x-8 items-center bg-gray-900">
 
 
           <NavLink
@@ -66,6 +66,7 @@ export default function Navbar() {
           >
             History & Progress
           </NavLink>
+          
         </div>
       </nav>
 
@@ -73,7 +74,7 @@ export default function Navbar() {
       {/* --- Mobile Menu (Dropdown) --- */}
       {/* This menu appears below the navbar when isOpen is true */}
       {/* The `transition-all` and `duration-300` classes create a smooth slide-down effect */}
-      <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} transition-all duration-300 ease-in-out bg-white shadow-lg`}>
+      <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} transition-all duration-300 ease-in-out bg-gray-900 shadow-lg`}>
         <div className="flex flex-col items-center space-y-4 py-4">
           <NavLink
             to="/log"

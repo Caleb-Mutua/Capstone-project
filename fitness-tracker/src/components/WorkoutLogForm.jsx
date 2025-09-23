@@ -124,21 +124,21 @@ export default function WorkoutLogForm({ onSaveWorkout, onCancel }) {
 
   // --- JSX (This is where the refinement happens) ---
   return (
-    <div className="space-y-6">
+    <div className=" space-y-6 bg-gray-900 ">
 
       {/* Section 1: Workout Setup & Adding Exercises */}
-      <div className="bg-background-medium p-6 rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold mb-4">Log New Workout</h2>
+      <div className=" bg-background-medium p-6 rounded-lg shadow-lg ">
+        <h2 className="text-2xl text-white font-bold mb-4">Log New Workout</h2>
         <input
           type="text"
           placeholder="Workout Name (e.g., Chest Day)"
           value={workoutName}
           onChange={(e) => setWorkoutName(e.target.value)}
-          className="w-full p-3 bg-background-dark border border-border rounded-lg mb-4"
+          className="w-full text-white p-3 bg-background-dark border border-border rounded-lg mb-4"
         />
-        <div className="border-t border-border pt-4 space-y-3">
-            <h3 className="text-lg font-semibold">Add Exercises to Your Workout</h3>
-            <div className="flex items-center gap-2">
+        <div className=" border-t border-border pt-4 space-y-3">
+            <h3 className="text-white font-semibold">Add Exercises to Your Workout</h3>
+            <div className="flex items-center text-white gap-2">
                 <input
                 type="text"
                 placeholder="Type to add an exercise manually"
@@ -154,7 +154,7 @@ export default function WorkoutLogForm({ onSaveWorkout, onCancel }) {
                 Add
                 </button>
             </div>
-            <div className="text-center text-text-secondary">or</div>
+            <div className="text-center text-white text-text-secondary">or</div>
             <button
               type="button"
               onClick={() => setShowExerciseList(true)}
@@ -187,7 +187,7 @@ export default function WorkoutLogForm({ onSaveWorkout, onCancel }) {
 
       {/* Section 2: Logging Details for Added Exercises */}
       {exercises.length > 0 && (
-        <div className="bg-background-medium p-6 rounded-lg shadow-lg space-y-6">
+        <div className="bg-background-medium text-white p-6 rounded-lg shadow-lg space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="text-xl font-bold">Your Workout Plan</h3>
             <div className="text-text-secondary">
