@@ -64,8 +64,8 @@ export default function HistoryPage() {
 
       {/* --- ENHANCED: Progress Tracking Section --- */}
 
-      <div className="bg-background-medium p-6 rounded-lg  ">
-        <h2 className="text-2xl text-center  text-white font-bold mb-4">Track Your Progress</h2>
+      <div className="bg-background-medium p-6 rounded-lg    ">
+        <h2 className="text-2xl text-center  text-white   font-bold mb-4">Track Your Progress</h2>
         {workouts.length > 0 ? (
           <>
 

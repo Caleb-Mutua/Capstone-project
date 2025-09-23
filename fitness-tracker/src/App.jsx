@@ -9,7 +9,7 @@ import './index.css';
 // --- A Simple Component for Your Homepage ---
 function HomePage() {
   return (
-    <div className="bg-gray-900 min-h-screen flex flex-col items-center justify-center text-center px-4 md:px-6 py-12 rounded-lg shadow-xl ">
+    <div className="bg-gray-900 h-screen flex flex-col items-center justify-center text-center px-6 rounded-lg shadow-xl ">
       <h1 className="text-4xl font-bold mb-4 text-blue-800">Welcome to Your Fitness Journey!</h1>
       <p className="text-gray-600 text-base sm:text-lg mb-8">
         Track your workouts, see your progress, and reach your goals.
